@@ -269,7 +269,7 @@ public:
 - (void)endBackgroundTask;
 
 - (void)reachabilityChanged:(NSNotification *)note;
-- (void)interruptionOccurred:(NSNotification *)notification;
+//- (void)interruptionOccurred:(NSNotification *)notification;
 
 - (void)notifyPlaybackStopped;
 - (void)notifyPlaybackBuffering;
@@ -346,13 +346,15 @@ public:
             [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
         }
 #endif
-        
+
+/*
 #if (__IPHONE_OS_VERSION_MIN_REQUIRED >= 60000)
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(interruptionOccurred:)
                                                      name:AVAudioSessionInterruptionNotification
                                                    object:nil];
 #endif
+*/
     }
     return self;
 }
@@ -814,6 +816,7 @@ public:
 #endif
 }
 
+
 - (void)notifyPlaybackStopped
 {
 #if (__IPHONE_OS_VERSION_MIN_REQUIRED >= 40000)
@@ -953,6 +956,13 @@ public:
 #if defined(DEBUG) || (TARGET_IPHONE_SIMULATOR)
         NSLog(@"FSAudioStream: Stream is preloading. Not attempting a restart");
 #endif
+        
+        [NSTimer scheduledTimerWithTimeInterval:0.1
+                                         target:self
+                                       selector:@selector(notifyRetryingFailed)
+                                       userInfo:nil
+                                        repeats:NO];
+        
         return;
     }
     
@@ -960,6 +970,11 @@ public:
 #if defined(DEBUG) || (TARGET_IPHONE_SIMULATOR)
         NSLog(@"FSAudioStream: Stream was paused. Not attempting a restart");
 #endif
+        [NSTimer scheduledTimerWithTimeInterval:0.1
+                                         target:self
+                                       selector:@selector(notifyRetryingFailed)
+                                       userInfo:nil
+                                        repeats:NO];
         return;
     }
     
@@ -967,7 +982,15 @@ public:
 #if defined(DEBUG) || (TARGET_IPHONE_SIMULATOR)
         NSLog(@"FSAudioStream: Internet connection not available. Not attempting a restart");
 #endif
+        
+        [NSTimer scheduledTimerWithTimeInterval:0.1
+                                         target:self
+                                       selector:@selector(notifyRetryingFailed)
+                                       userInfo:nil
+                                        repeats:NO];
+        
         return;
+        
     }
     
     if (self.retryCount >= self.maxRetryCount) {
